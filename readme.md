@@ -1,4 +1,4 @@
-# AbstractSDRsSpectrum.jl package 
+# AbstractSDRsSpectrum.jl  
 
 ## Overview and supported backends
 
