@@ -1,6 +1,6 @@
 # AbstractSDRsSpectrum.jl package 
 
-## Overview iand supported backends
+## Overview and supported backends
 
 This small package aims to propose some tools to peform spectral analysis with the use of Software Defined Radio (SDR). It provides a real time Discrete Fourier Transform (DFT) output (square magnitude).
 This package leverage the use of AbstractSDRs.jl package and provides the same interface for differnt SDR backends.
