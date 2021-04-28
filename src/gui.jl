@@ -27,7 +27,7 @@ function mainGUI(sdr,carrierFreq,samplingRate,gain=20,nbSegMeanInit=24,p=nothing
     global radio			= openSDR(sdr,newCarrierFreq,samplingRate,gain;kwargs...); 
     # --- Create FIR filter 
     nFFT      = 1024;
-    nbSamples = radio.rx.packetSize;
+    nbSamples = 1024;
     buffer    = zeros(Complex{Cfloat},nbSamples);
     sig       = zeros(Complex{Cfloat},nFFT);
     sfM         = zeros(Cfloat,nFFT);
@@ -127,7 +127,8 @@ function gui()
     stopButton = button(" ! Stop"; value=0,style = Dict("backgroundColor" => "#EF553B") );
     # --- 
     (wW,hW) = WINDOW_SIZE;
-    w = Window(Blink.@d(:width=>wW, :height=>hW));
+    # w = Window(Blink.@d(:width=>wW, :height=>hW));
+    w = Window();
     title(w,"Spectrum viewer in Julia");
     # --- Horizontal axis 
     layout = hbox(pad(1em,wdg),pad(1em,widgetArgs));

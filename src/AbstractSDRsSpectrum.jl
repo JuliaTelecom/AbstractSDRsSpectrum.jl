@@ -7,6 +7,7 @@ using Plots
 gr()
 using Printf
 using FFTW
+using Dates
 using AbstractSDRs 
 using Statistics
 using LinearAlgebra
@@ -57,7 +58,7 @@ function hostSpectrum(radioAll,nFFT,nbSegMean;maxHold=false);
     global newMean  = nbSegMean;
     global newLims  = (-60,20);
     radio = radioAll.rx;
-    nbSamples = radio.packetSize;
+    nbSamples = nFFT;
     global newSamplingRate  = radio.samplingRate;
     # --- Define local parameters
     yLim	        = newLims;
