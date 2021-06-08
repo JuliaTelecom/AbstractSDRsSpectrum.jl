@@ -10,7 +10,6 @@ version = "1.0.1"
 deps = ["AdalmPluto", "Libdl", "Printf", "RTLSDR", "Reexport", "Sockets", "Test", "UHDBindings", "ZMQ"]
 git-tree-sha1 = "2f51c3d035f7887c7472ca5a55bcb262fe5bd758"
 repo-rev = "test_refactor"
-repo-url = "../AbstractSDRs"
 uuid = "0bdde9fc-719a-4dc7-8589-49ca6634fa6b"
 version = "0.1.2"
 
