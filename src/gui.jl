@@ -1,11 +1,12 @@
 # ----------------------------------------------------
 # --- Global functions 
 # ---------------------------------------------------- 
-FLAG    = false;
-UPDATE  = false;
-MAX_HOLD = false;
-nbSegMean = 24;
-radio = nothing;
+FLAG    = false
+UPDATE  = false
+CURRENT = true
+MAX_HOLD = false
+nbSegMean = 24
+radio = nothing
 
 WINDOW_SIZE = (800,700); # Change it by @eval AbstractSDRsSpectrum WINDOW_SIZE=(400,200)
 PLOT_SIZE = (700,500);
@@ -45,7 +46,7 @@ function mainGUI(sdr,carrierFreq,samplingRate,gain=20,nbSegMeanInit=24,p=nothing
                 # --- We have update something, need to redo sme stuff 
                 nbSegMean == 0 ? α = 1 :  α         = 1/ nbSegMean;
                 sfM .= 0;
-                x         = ((0:nFFT-1)/nFFT .- 0.5) .* radio.rx.samplingRate ./1e6;
+                x         = ((0:nFFT-1)/nFFT .- 0.5) .* getSamplingRate(radio) ./1e6;
                 UPDATE = false;
                 maxS .= -120;
                 maxHold = MAX_HOLD;
@@ -209,13 +210,17 @@ end
 # --- Callbacks
 # ---------------------------------------------------- 
 function updateC(val)
-    global FLAG, UPDATE;
+    global FLAG, UPDATE, CURRENT
     if FLAG == true 
         if val != ""
             carrierFreq = parse(Float64,val)*1e6;
-            # carrierFreq = val*1e6;
-            updateCarrierFreq!(radio,carrierFreq);
-            UPDATE = true;
+            if CURRENT == true 
+                # When we write new value it can lead to several calls to updateCarrierFreq, not necessary well handle on the SDR side... We implement a soft lock here to be sure we do not call sevearl times updateCarrierFreq
+                updateCarrierFreq!(radio,carrierFreq);
+                UPDATE = true
+                CURRENT = false 
+            end
+            CURRENT = true
         end
     end
 end
