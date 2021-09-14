@@ -57,16 +57,16 @@ function hostSpectrum(radioAll,nFFT,nbSegMean;maxHold=false);
     global changed  = 0;
     global newMean  = nbSegMean;
     global newLims  = (-60,20);
-    radio = radioAll.rx;
     nbSamples = nFFT;
-    global newSamplingRate  = radio.samplingRate;
+    # global newSamplingRate  = getSamplingRate(radio);
+    global newSamplingRate  = getSamplingRate(radio)
     # --- Define local parameters
     yLim	        = newLims;
     sF 	            = zeros(Cfloat,nFFT);
     y	            = zeros(Cfloat,nFFT);
     maxH            = zeros(Cfloat,nFFT);
-    xAx		        = ((0:nFFT-1) ./ nFFT .-0.5) .*  round(radio.samplingRate,digits=2);
-    fMHz            = round(radio.carrierFreq / 1e6, digits=3) ;
+    xAx		        = ((0:nFFT-1) ./ nFFT .-0.5) .*  round(newSamplingRate,digits=2);
+    fMHz            = round(getCarrierFreq(radio) / 1e6, digits=3) ;
     buffer          = zeros(Complex{Cfloat},nbSamples); 
     sig				= zeros(Complex{Cfloat},nFFT); 
     P               = plan_fft(sig;flags=FFTW.PATIENT);
@@ -92,7 +92,7 @@ function hostSpectrum(radioAll,nFFT,nbSegMean;maxHold=false);
                 # --- Recalculate x axis based on the new configuration 
                 sleep(0.001);
                 xAx     = ((0:nFFT-1) ./ nFFT .-0.5) .* round(newSamplingRate,digits=2);
-                fMHz	= round(radio.carrierFreq / 1e6, digits=3) ;
+                fMHz	= round(getCarrierFreq(radio) / 1e6, digits=3) ;
                 # --- Relock the process until a new change is detected
                 changed = 0;
                 α 		= 1/nbSegMean;
@@ -100,7 +100,7 @@ function hostSpectrum(radioAll,nFFT,nbSegMean;maxHold=false);
                 maxH 	.= 0;
             end
             # --- Update plot 
-            plt		= Plots.plot(xAx/1e6,10.0*log10.(sF),title="Spectrum of $(round(radio.samplingRate/1e6,digits=2)) MHz @ $(round(radio.carrierFreq / 1e6, digits=3)) MHz ",xlabel="Frequency [MHz]",ylabel="Power",label="",ylims=yLim,reuse=false);
+            plt		= Plots.plot(xAx/1e6,10.0*log10.(sF),title="Spectrum of $(round(getSamplingRate(radio)/1e6,digits=2)) MHz @ $(round(getCarrierFreq(radio) / 1e6, digits=3)) MHz ",xlabel="Frequency [MHz]",ylabel="Power",label="",ylims=yLim,reuse=false);
             if maxHold 
                 maxH 	= max.(maxH,sF);
                 Plots.plot!(plt,xAx/1e6,10.0*log10.(maxH),label="");
@@ -143,14 +143,14 @@ function hostWaterfall(radio,nFFT,nbSegMean);
     global changed  = 0;
     global newMean  = nbSegMean;
     global newLims  = (-60,20);
-    global newSamplingRate  = radio.samplingRate;
+    global newSamplingRate  = getSamplingRate(radio);
     # --- Define local parameters
     yLim	        = newLims;
     sF 	            = zeros(Cfloat,nFFT,nbSegMean);
     y	            = zeros(Cfloat,nFFT);
-    xAx		        = ((0:nFFT-1) ./ nFFT .-0.5) .*  round(radio.samplingRate,digits=2);
-    yAy 			= round.((0:nbSegMean-1)./ radio.samplingRate .* 1e3,digits=3)
-    fMHz            = round(radio.carrierFreq / 1e6, digits=3) ;
+    xAx		        = ((0:nFFT-1) ./ nFFT .-0.5) .*  round(getSamplingRate(radio),digits=2);
+    yAy 			= round.((0:nbSegMean-1)./ getSamplingRate(radio) .* 1e3,digits=3)
+    fMHz            = round(getCarrierFreq(radio) / 1e6, digits=3) ;
     sig				= zeros(Complex{Cfloat},nFFT); 
     P               = plan_fft(sig;flags=FFTW.PATIENT);
     tSeg 			= 1/ newSamplingRate * nFFT * 1000;
@@ -170,8 +170,8 @@ function hostWaterfall(radio,nFFT,nbSegMean);
                 yLim        = newLims;
                 # --- Recalculate x axis based on the new configuration 
                 xAx     = ((0:nFFT-1) ./ nFFT .-0.5) .* round(newSamplingRate,digits=2);
-                # yAy 	= (0:nbSegMean*nFFT-1) ./ radio.samplingRate .* 1e3;
-                fMHz	= round(radio.carrierFreq / 1e6, digits=3) ;
+                # yAy 	= (0:nbSegMean*nFFT-1) ./ getSamplingRate(radio) .* 1e3;
+                fMHz	= round(getCarrierFreq(radio) / 1e6, digits=3) ;
                 tSeg 	= 1/newSamplingRate * nFFT*1000;
                 yAy 	= (0:nbSegMean-1).*tSeg;
                 # --- Relock the process until a new change is detected
@@ -179,8 +179,8 @@ function hostWaterfall(radio,nFFT,nbSegMean);
                 sF 		.= 0;
             end
             # --- Update plot 
-            # plt		= heatmap(xAx/1e6,(0:nbSegMean-1),10.0*log10.(sF)',title="Spectrum of $(round(radio.samplingRate/1e6,digits=2)) MHz @ $(round(radio.carrierFreq / 1e6, digits=3)) MHz ",xlabel="Frequency [MHz]",ylabel="Time [burst]",clim=yLim,label="",reuse=false);
-            plt		= heatmap(xAx/1e6,yAy,10.0*log10.(sF)',title="Spectrum of $(round(radio.samplingRate/1e6,digits=2)) MHz @ $(round(radio.carrierFreq / 1e6, digits=3)) MHz ",xlabel="Frequency [MHz]",ylabel="Time [ms]",clim=yLim,label="",reuse=false);
+            # plt		= heatmap(xAx/1e6,(0:nbSegMean-1),10.0*log10.(sF)',title="Spectrum of $(round(getSamplingRate(radio)/1e6,digits=2)) MHz @ $(round(getCarrierFreq(radio) / 1e6, digits=3)) MHz ",xlabel="Frequency [MHz]",ylabel="Time [burst]",clim=yLim,label="",reuse=false);
+            plt		= heatmap(xAx/1e6,yAy,10.0*log10.(sF)',title="Spectrum of $(round(getSamplingRate(radio)/1e6,digits=2)) MHz @ $(round(getCarrierFreq(radio) / 1e6, digits=3)) MHz ",xlabel="Frequency [MHz]",ylabel="Time [ms]",clim=yLim,label="",reuse=false);
 
             # plt = heatmap(transpose(sF));
             # end
