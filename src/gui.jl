@@ -101,7 +101,7 @@ end
 # ----------------------------------------------------
 # --- GUI
 # ---------------------------------------------------- 
-function gui()
+function gui(;kw1...)
     global FLAG = false;
     global UPDATE = false;
     # ----------------------------------------------------
@@ -115,7 +115,7 @@ function gui()
     widgetAverage     = widget(0:512, label="Averaging window");
     widgetBandwidth   = widget(0:1:MAX_BANDWIDTH, label="Bandwidth (MHz)");
     # --- Creating some stuff related to args 
-    widgetArgs = textbox(hint=""; value="addr=192.168.10.13");
+    widgetArgs = textbox(hint=""; value="arg=\"addr=192.168.10.13\"");
     widgetMaxHold = checkbox(false,label="Max Hold");
     # --- Widget for radio configuration 
     sdrList = AbstractSDRs.getSupportedSDRs();
@@ -196,8 +196,18 @@ function gui()
         nbSegMean   = widgetAverage[];
         samplingRate = widgetBandwidth[] *1e6;
         maxHold = widgetMaxHold[];
-        kwargs = (;args=widgetArgs[]);
-        @async mainGUI(sdr,carrierFreq,samplingRate,gain,nbSegMean,p,maxHold;kwargs...);
+        # kwargs = (;args=widgetArgs[]);
+        # --- Creating a dict with all keywords, given as a string
+        str = widgetArgs[] 
+        argS = split(str,",") 
+        kwargs = Dict()
+        for s in argS 
+            (k,p_) = split(s,"=")
+            p_ = replace(p_,"\""=>"")
+            push!(kwargs,Symbol(k)=>p_)
+        end
+        # kwargs = (;args=widgetArgs[]);
+        @async mainGUI(sdr,carrierFreq,samplingRate,gain,nbSegMean,p,maxHold;kwargs...,kw1...);
     end
     success(w.shell.proc)
     global FLAG=false; 
