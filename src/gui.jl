@@ -5,6 +5,8 @@ FLAG    = false
 UPDATE  = false
 CURRENT = true
 MAX_HOLD = false
+FLAG_ERROR = 0
+ERROR_STR = ""
 nbSegMean = 24
 radio = nothing
 
@@ -17,6 +19,8 @@ MAX_BANDWIDTH = 16;
 # ---------------------------------------------------- 
 function mainGUI(sdr,carrierFreq,samplingRate,gain=20,nbSegMeanInit=24,p=nothing,maxHold=false;kwargs...)
     # --- Simulation parameters
+    global ERROR_STR 
+    global FLAG_ERROR
     global FLAG;
     global UPDATE;
     global nbSegMean = nbSegMeanInit;
@@ -25,7 +29,12 @@ function mainGUI(sdr,carrierFreq,samplingRate,gain=20,nbSegMeanInit=24,p=nothing
     duration                  = 0.5;
     nbSamples                 = Int( duration * samplingRate);
     # --- Update radio configuration
-    global radio			= openSDR(sdr,newCarrierFreq,samplingRate,gain;kwargs...); 
+    try 
+        global radio			= openSDR(sdr,newCarrierFreq,samplingRate,gain;kwargs...); 
+    catch exception
+        FLAG_ERROR = -1
+        ERROR_STR = exception
+    end
     # --- Create FIR filter 
     nFFT      = 1024;
     nbSamples = 1024;
@@ -93,9 +102,12 @@ function mainGUI(sdr,carrierFreq,samplingRate,gain=20,nbSegMeanInit=24,p=nothing
         end
     catch exception;
         close(radio);
-        rethrow(exception);
+        FLAG_ERROR  = -2
+        ERROR_STR = exception
+        rethrow(exception)
     end 
     close(radio);
+    return 0
 end
 
 # ----------------------------------------------------
@@ -170,6 +182,11 @@ function gui(;kw1...)
         c = Dates.format(now(), "HH:MM:SS")  
         println("--------\n $c New config radio");
         print(radio);
+        if FLAG_ERROR < 0 
+            println("")
+            println("An error has occured during AbstractSDRsSpectrum.gui()")
+            println("$ERROR_STR")
+        end
     end
     m = on(widgetMaxHold) do mm 
         global MAX_HOLD = mm;
@@ -183,6 +200,7 @@ function gui(;kw1...)
         end
     end
     # --- Starting routine 
+    task = Any
     h = on(startButton) do click 
         startButton["is-loading"][]=true
         #@show click
@@ -202,12 +220,13 @@ function gui(;kw1...)
         argS = split(str,",") 
         kwargs = Dict()
         for s in argS 
+            isempty(s) && break
             (k,p_) = split(s,"=")
             p_ = replace(p_,"\""=>"")
             push!(kwargs,Symbol(k)=>p_)
         end
         # kwargs = (;args=widgetArgs[]);
-        @async mainGUI(sdr,carrierFreq,samplingRate,gain,nbSegMean,p,maxHold;kwargs...,kw1...);
+        @async task = mainGUI(sdr,carrierFreq,samplingRate,gain,nbSegMean,p,maxHold;kwargs...,kw1...);
     end
     success(w.shell.proc)
     global FLAG=false; 
